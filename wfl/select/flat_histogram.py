@@ -46,7 +46,7 @@ def _select_by_bin(weights, bin_edges, quantities, n, rng, kT=-1.0, replace=Fals
     n_from_bin = [min(int(w), int(np.round(prefactor_h * np.exp(-bin_ctr / kT)))) for bin_ctr, w in
                   zip(bin_centers, weights)]
     n_from_bin = np.asarray(n_from_bin)
-
+    total_n = np.sum(n_from_bin)
     # always remove excess from most occupied bins
     # not actually best if using Boltzmann bias
     n_excess = total_n - n
@@ -178,15 +178,19 @@ def biased_select_conf(inputs, outputs, num, info_field, rng, kT=-1.0, bins='aut
     # convert to set for faster checking (O(1)?) of "in" below
     selected_indices = _select_indices_flat_boltzmann_biased(quantities, num, rng=rng, kT=kT, bins=bins,
                                                              by_bin=by_bin, replace=replace, verbose=verbose)
-
-    selected_indices = sorted(selected_indices)
+    
+    # list of indices that actually had the required info_field
+    valid_input_indices = [idx for idx, at in enumerate(inputs) if info_field in at.info]
+    # ranslate the selection to original indices and sort for the final loop
+    final_indices = sorted([valid_input_indices[i] for i in selected_indices])
+    
     selected_i = 0
     for at_i, at in enumerate(inputs):
-        while selected_i < len(selected_indices) and selected_indices[selected_i] <= at_i:
-            if selected_indices[selected_i] == at_i:
+        while selected_i < len(final_indices) and final_indices[selected_i] <= at_i:
+            if final_indices[selected_i] == at_i:
                 outputs.store(at)
             selected_i += 1
-        if selected_i >= len(selected_indices):
+        if selected_i >= len(final_indices):
             break
 
     outputs.close()
