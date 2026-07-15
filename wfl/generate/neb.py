@@ -105,6 +105,11 @@ def _run_autopara_wrappable(list_of_images, calculator, fmax=5e-2, steps=1000,
             else:
                 raise
 
+        if not traj:
+            all_trajs.append([])
+            continue
+
+
         # set for first config, to be overwritten if it's also last config
 
         for at in traj[0]:
@@ -156,6 +161,9 @@ def subselect_from_traj(traj, subselect=None):
           - "last_converged": returns [last_config] if converged, or None if not.
 
     """
+    if not traj:
+       return []
+
     if subselect is None:
         return traj
     elif subselect == "last":
